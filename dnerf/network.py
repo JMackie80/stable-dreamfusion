@@ -131,8 +131,9 @@ class NeRFNetwork(NeRFRenderer):
         #if enc_t.shape[0] == 1:
         #    enc_t = enc_t.repeat(x.shape[0], 1) # [1, C'] --> [N, C']
         enc_d = self.encoder_dir(d)
+        self.enc_d = enc_d
 
-        deform = torch.cat([x, enc_ori_x], dim=1) # [N, C + C']
+        deform = torch.cat([x, enc_d], dim=1) # [N, C + C']
         for l in range(self.num_layers_deform):
             deform = self.deform_net[l](deform)
             if l != self.num_layers_deform - 1:
@@ -178,13 +179,13 @@ class NeRFNetwork(NeRFRenderer):
         #if enc_t.shape[0] == 1:
         #    enc_t = enc_t.repeat(x.shape[0], 1) # [1, C'] --> [N, C']
 
-        #deform = torch.cat([enc_ori_x, enc_t], dim=1) # [N, C + C']
-        #for l in range(self.num_layers_deform):
-        #    deform = self.deform_net[l](deform)
-        #    if l != self.num_layers_deform - 1:
-        #        deform = F.relu(deform, inplace=True)
+        deform = torch.cat([enc_ori_x, self.enc_d], dim=1) # [N, C + C']
+        for l in range(self.num_layers_deform):
+            deform = self.deform_net[l](deform)
+            if l != self.num_layers_deform - 1:
+                deform = F.relu(deform, inplace=True)
         
-        #x = x + deform
+        x = x + deform
         results['deform'] = x
         
         # sigma
