@@ -170,10 +170,10 @@ class NeRFNetwork(NeRFRenderer):
         # x: [N, 3], in [-bound, bound]
         # t: [1, 1], in [0, 1]
 
-        results = {}
+        #results = {}
 
         # deformation
-        enc_ori_x = self.encoder_deform(x, bound=self.bound) # [N, C]
+        #enc_ori_x = self.encoder_deform(x, bound=self.bound) # [N, C]
         #enc_t = self.encoder_time(t) # [1, 1] --> [1, C']
         #if enc_t.shape[0] == 1:
         #    enc_t = enc_t.repeat(x.shape[0], 1) # [1, C'] --> [N, C']
@@ -185,24 +185,30 @@ class NeRFNetwork(NeRFRenderer):
         #        deform = F.relu(deform, inplace=True)
         
         #x = x + deform
-        results['deform'] = x
+        #results['deform'] = x
         
         # sigma
-        x = self.encoder(x, bound=self.bound)
-        h = torch.cat([x, enc_ori_x], dim=1)
-        for l in range(self.num_layers):
-            h = self.sigma_net[l](h)
-            if l != self.num_layers - 1:
-                h = F.relu(h, inplace=True)
+        #x = self.encoder(x, bound=self.bound)
+        #h = torch.cat([x, enc_ori_x], dim=1)
+        #for l in range(self.num_layers):
+        #    h = self.sigma_net[l](h)
+        #    if l != self.num_layers - 1:
+        #        h = F.relu(h, inplace=True)
 
         #sigma = F.relu(h[..., 0])
-        sigma = trunc_exp(h[..., 0])
-        geo_feat = h[..., 1:]
+        #sigma = trunc_exp(h[..., 0])
+        #geo_feat = h[..., 1:]
 
         results['sigma'] = sigma
         results['geo_feat'] = geo_feat
 
-        return results
+        sigma_feat = self.get_sigma_feat(x)
+        sigma = trunc_exp(sigma_feat)
+
+        #return results
+        return {
+            'sigma': sigma,
+        }
 
     def background(self, x, d):
         # x: [N, 2], in [-1, 1]
