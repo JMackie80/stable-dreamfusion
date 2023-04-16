@@ -132,7 +132,7 @@ class NeRFNetwork(NeRFRenderer):
         #    enc_t = enc_t.repeat(x.shape[0], 1) # [1, C'] --> [N, C']
         enc_d = self.encoder_dir(d)
 
-        deform = torch.cat([enc_ori_x, enc_d], dim=1)) # [N, C + C']
+        deform = torch.cat([enc_ori_x, enc_d], dim=1) # [N, C + C']
         for l in range(self.num_layers_deform):
             deform = self.deform_net[l](deform)
             if l != self.num_layers_deform - 1:
