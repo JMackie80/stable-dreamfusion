@@ -26,6 +26,7 @@ parser.add_argument('--decimate_target', type=int, default=1e5, help="target fac
 ### training options
 parser.add_argument('--iters', type=int, default=10000, help="training iters")
 parser.add_argument('--lr', type=float, default=1e-3, help="initial learning rate")
+parser.add_argument('--lr2', type=float, default=1e-3, help="initial learning rate 2")
 parser.add_argument('--ckpt', type=str, default='latest')
 parser.add_argument('--cuda_ray', action='store_true', help="use CUDA raymarching instead of pytorch")
 parser.add_argument('--max_steps', type=int, default=1024, help="max num steps sampled per ray (only valid when using --cuda_ray)")
@@ -37,7 +38,7 @@ parser.add_argument('--warmup_iters', type=int, default=1000, help="training ite
 parser.add_argument('--uniform_sphere_rate', type=float, default=0.5, help="likelihood of sampling camera location uniformly on the sphere surface area")
 # model options
 parser.add_argument('--bg_radius', type=float, default=1.4, help="if positive, use a background model at sphere(bg_radius)")
-parser.add_argument('--density_activation', type=str, default='softplus', choices=['softplus', 'exp'] help="density activation function")
+parser.add_argument('--density_activation', type=str, default='softplus', choices=['softplus', 'exp'], help="density activation function")
 parser.add_argument('--density_thresh', type=float, default=10, help="threshold for density grid to be occupied")
 parser.add_argument('--blob_density', type=float, default=10, help="max (center) density for the density blob")
 parser.add_argument('--blob_radius', type=float, default=0.3, help="control the radius for the density blob")
@@ -166,11 +167,11 @@ with gr.Blocks(css=".gradio-container {max-width: 512px; margin: auto;}") as dem
         if opt.optim == 'adan':
             from optimizer import Adan
             # Adan usually requires a larger LR
-            optimizer = lambda model: Adan(model.get_params(5 * opt.lr), eps=1e-15)
+            optimizer = lambda model: Adan(model.get_params(5 * opt.lr, 5 * opt.lr2), eps=1e-15)
         elif opt.optim == 'adamw':
-            optimizer = lambda model: torch.optim.AdamW(model.get_params(opt.lr), betas=(0.9, 0.99), eps=1e-15)
+            optimizer = lambda model: torch.optim.AdamW(model.get_params(opt.lr, opt.lr2), betas=(0.9, 0.99), eps=1e-15)
         else: # adam
-            optimizer = lambda model: torch.optim.Adam(model.get_params(opt.lr), betas=(0.9, 0.99), eps=1e-15)
+            optimizer = lambda model: torch.optim.Adam(model.get_params(opt.lr, opt.lr2), betas=(0.9, 0.99), eps=1e-15)
 
         scheduler = lambda optimizer: optim.lr_scheduler.LambdaLR(optimizer, lambda iter: 1) # fixed
 
