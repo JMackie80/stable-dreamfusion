@@ -143,7 +143,7 @@ class NeRFNetwork(NeRFRenderer):
         # sigma
         x = self.encoder(x, bound=self.bound)
         #h = torch.cat([x, enc_ori_x, enc_t], dim=1)
-        h = torch.cat([x, enc_ori_x], dim=1)
+        h = torch.cat([x, enc_ori_x, -1], dim=1)
         for l in range(self.num_layers):
             h = self.sigma_net[l](h)
             if l != self.num_layers - 1:
@@ -202,7 +202,7 @@ class NeRFNetwork(NeRFRenderer):
         # sigma
         x = self.encoder(x, bound=self.bound)
         #h = torch.cat([x, enc_ori_x, enc_t], dim=1)
-        h = torch.cat([x, enc_ori_x], dim=1)
+        h = torch.cat([x, enc_ori_x, -1], dim=1)
         for l in range(self.num_layers):
             h = self.sigma_net[l](h)
             if l != self.num_layers - 1:
