@@ -199,8 +199,8 @@ class NeRFNetwork(NeRFRenderer):
         #sigma = trunc_exp(h[..., 0])
         #geo_feat = h[..., 1:]
 
-        results['sigma'] = sigma
-        results['geo_feat'] = geo_feat
+        #results['sigma'] = sigma
+        #results['geo_feat'] = geo_feat
 
         sigma_feat = self.get_sigma_feat(x)
         sigma = trunc_exp(sigma_feat)
