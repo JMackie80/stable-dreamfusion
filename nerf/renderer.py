@@ -293,7 +293,7 @@ class NeRFRenderer(nn.Module):
                     results_ = self.density(xyzs[head:tail])
                     if 'albedo' in results_:
                         all_feats.append(results_['albedo'].float())
-                    head += 640000
+                        head += 640000
 
                 feats[mask] = torch.cat(all_feats, dim=0)
             
