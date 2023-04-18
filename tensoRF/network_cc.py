@@ -276,63 +276,19 @@ class NeRFNetwork(NeRFRenderer):
 
         N = x.shape[0]
 
-        # single object
-        if len(self.K) == 1:
+        x_model = self.normalize_coord(x)
+        feats_density = self.compute_features_density(x_model, -1, residual=False) # [N, 1]
+        sigma = trunc_exp(feats_density).squeeze(-1) # [K, N]
 
-            x_model = self.normalize_coord(x)
-            feats_density = self.compute_features_density(x_model, -1, residual=False) # [N, 1]
-            sigma = trunc_exp(feats_density).squeeze(-1) # [K, N]
+        enc_d = self.encoder_dir(d) # [N, C]
 
-            enc_d = self.encoder_dir(d) # [N, C]
+        h = self.compute_features(x_model, -1, residual=False) # [N, 3C]
+        h = h.view(N, 3, self.degree ** 2) # [K, N, 3, C]
+        h = (h * enc_d.unsqueeze(1)).sum(-1) # [K, N, 3]
 
-            h = self.compute_features(x_model, -1, residual=False) # [N, 3C]
-            h = h.view(N, 3, self.degree ** 2) # [K, N, 3, C]
-            h = (h * enc_d.unsqueeze(1)).sum(-1) # [K, N, 3]
+        rgb = torch.sigmoid(h) # [K, N, 3] 
 
-            rgb = torch.sigmoid(h) # [K, N, 3] 
-
-            return sigma, rgb, None
-
-        # multi-object (composed scene), do not support rank-residual training for now.
-        else:
-            
-            sigma_list = []
-            h_list = []
-
-            sigma_all = 0
-            rgb_all = 0
-
-
-            for oid in range(1, len(self.K)):
-                x_model = self.normalize_coord(x, oid=oid)
-
-                feats_density = self.compute_features_density(x_model, -1, residual=False, oid=oid) # [N, 1]
-
-                sigma = trunc_exp(feats_density).squeeze(-1) # [N]
-                sigma_list.append(sigma.detach().clone())
-
-                sigma_all += sigma
-
-                d_model = self.normalize_dir(d, oid=oid)
-                enc_d = self.encoder_dir(d_model) # [N, C]
-
-                h = self.compute_features(x_model, -1, residual=False, oid=oid) # [N, 3C]
-                h = h.view(N, 3, self.degree ** 2)
-                h = (h * enc_d.unsqueeze(1)).sum(-1) # [N, 3]
-
-                h_list.append(h)
-
-
-            ws = torch.stack(sigma_list, dim=0) # [O, N]
-            ws = F.softmax(ws, dim=0)
-
-            for oid in range(1, len(self.K)):
-                rgb_all += h_list[oid - 1] * ws[oid - 1].unsqueeze(-1)
-
-            rgb_all = torch.sigmoid(rgb_all)
-
-            return sigma_all, rgb_all, None
-
+        return sigma, rgb, None
 
     def density(self, x, KIN=-1):
         # x: [N, 3], in [-bound, bound]
